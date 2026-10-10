@@ -14,8 +14,5 @@ b = lamports(human.pubkey())
 send(sweep_closed_ixs(keeper.pubkey(), M, human.pubkey(), 1), keeper, [keeper])
 got = (lamports(human.pubkey()) - b) / 1e9
 print(f"after close: 5 SOL buy -> creator fee forwarded to the creator: {got:.6f} SOL (0.30% of 5 SOL = 0.015)")
-eve = Keypair(); airdrop(eve.pubkey(), 1)
-try:
-    send(sweep_closed_ixs(eve.pubkey(), M, eve.pubkey(), 1), eve, [eve]); print('FAIL: sweep_closed paid a fake creator')
-except Exception as e:
-    print("pass: sweep_closed with a fake creator is refused:", "'Custom': 14}" in str(e))
+# A stranger naming themselves creator is covered by pino_fakecreator.py: against the REAL vault it is
+# refused (BadAccount); against their own empty vault it is a harmless no-op.
