@@ -1,0 +1,13 @@
+[Unit]
+Description=Battle Bot Arena keeper for match %i
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=%h/.config/arena/keeper.env
+ExecStart=/usr/bin/env python3 -u %h/pump-battle-arena/service/run_keeper.py --mint %i
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

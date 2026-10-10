@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""One-line-per-match view of what the keeper is doing."""
+import json, os, time
+ST = os.path.expanduser('~/.local/state/arena')
+try: s = json.load(open(f'{ST}/status.json'))
+except FileNotFoundError: raise SystemExit('no status yet (keeper not started)')
+age = int(time.time()) - s['t']
+print(f"keeper {s['keeper'][:8]}..  {s['keeper_sol']:.4f} SOL  last tick {age}s ago{'  <-- STALE' if age > 60 else ''}")
+for m, x in s['matches'].items():
+    if x.get('closed'): print(f"  {m[:8]}..  CLOSED (rent refunded)"); continue
+    if 'error' in x: print(f"  {m[:8]}..  ERROR {x['error']}"); continue
+    now = int(time.time()); st = 'sold' if x['sold'] else ('LOCKED, unlock in %ds' % (x['unlock_ts'] - now) if x['unlock_ts'] > now else 'unlocked, selling')
+    if x['claimed']: st = 'PAID to winner'
+    if x['expired']: st = 'expired to fallback'
+    print(f"  {m[:8]}..  {st:28s} pot {x['prize_pot']/1e9:.4f}  fees {x['fee_total']/1e9:.4f}  cost {x['cost_basis']/1e9:.4f}  proceeds {x['proceeds']/1e9:.4f}  candle {'drawn' if x['candle_end'] else '-'}  result {'posted' if x['deadline'] else '-'}")
+rows = [json.loads(l) for l in open(f'{ST}/keeper.jsonl')][-5:]
+print('last events:'); [print('   ', time.strftime('%H:%M:%S', time.localtime(r['t'])), r['ev'], {k: v for k, v in r.items() if k not in ('t', 'ev', 'mint')}) for r in rows]

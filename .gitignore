@@ -1,0 +1,8 @@
+target/
+__pycache__/
+*.json.tmp
+*.so
+*-keypair.json
+keeper.json
+scorer.json
+*.env
