@@ -130,7 +130,8 @@ class Keeper:
                 w, b = board[0]
                 if self._send('post', [post_ix(self.scorer.pubkey(), mint, P(w), int(b['realized']), hsh)], self.scorer):
                     self.log('posted', winner=w, realized=b['realized'] / 1e9, entrants=len(board), leaderboard_hash=hsh.hex()[:16])
-            return
+                return
+            # no entrants: fall through, so the timeout can send the pot to the fallback
         if m['deadline'] and now >= m['deadline'] and not m['claimed']:
             if self._send('claim', [pay_ix('claim', k.pubkey(), mint, m['winner'])], k):
                 self.log('claimed', winner=str(m['winner']), amount=m['prize_pot'] / 1e9)
