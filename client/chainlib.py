@@ -83,6 +83,13 @@ def send(ixs, payer, signers, cu=400_000, simulate_first=True, wait=True):
     b64 = base64.b64encode(bytes(tx)).decode()
     if simulate_first:
         sim = rpc.call('simulateTransaction', [b64, {'encoding': 'base64', 'commitment': 'confirmed'}])['value']
+        for _ in range(3):          # a load-balanced RPC may not know a fresh blockhash yet: rebuild on a newer one
+            if sim.get('err') != 'BlockhashNotFound': break
+            time.sleep(1.5)
+            bh = rpc.call('getLatestBlockhash', [{'commitment': 'confirmed'}])['value']['blockhash']
+            msg = Message.new_with_blockhash(budget + list(ixs), payer.pubkey(), Hash.from_string(bh))
+            tx = Transaction(list(signers), msg, Hash.from_string(bh)); b64 = base64.b64encode(bytes(tx)).decode()
+            sim = rpc.call('simulateTransaction', [b64, {'encoding': 'base64', 'commitment': 'confirmed'}])['value']
         if sim.get('err'):
             logs = '\n    '.join((sim.get('logs') or [])[-25:])
             raise RuntimeError(f'simulation failed: {sim["err"]}\n    {logs}')

@@ -43,7 +43,7 @@ def chain_trades(mint, until_ts, exclude):
             before = page[-1]['signature']
     out = []
     for sig, bt in sigs.items():
-        tx = rpc.call('getTransaction', [sig, {'encoding': 'json', 'commitment': 'confirmed', 'maxSupportedTransactionVersion': 0}])
+        tx = rpc.call('getTransaction', [sig, {'encoding': 'json', 'commitment': 'confirmed', 'maxSupportedTransactionVersion': 1}])
         keys = tx['transaction']['message']['accountKeys']; m = tx['meta']
         payer = keys[0]
         if payer in exclude:
