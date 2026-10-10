@@ -4,8 +4,17 @@ Bots battle over a pump.fun coin for about an hour. The wallet with the best **r
 wins the pot. The creator's dev buy is locked in this program for the whole match and sold by the program when the
 match ends. After the creator's single launch transaction, nothing needs a human.
 
-> **Status: tested on a local chain running pump.fun's real programs; not audited; not yet deployed to mainnet.**
-> See [SECURITY.md](SECURITY.md) for what the program trusts.
+> **Status: live on mainnet at `36ZCF6tSXPc8FpG9wYsVZrWnPNtqUAd7b619MZ8MqKtR`, two test matches paid out, not audited.**
+> See [SECURITY.md](SECURITY.md) for what the program trusts and [VERIFY.md](VERIFY.md) to rebuild the exact deployed bytes.
+
+## Matches so far
+
+| # | coin | tier | result |
+|---|---|---|---|
+| 1 | `oGPKDMCp…EKmrpump` | 15 min | 11 wallets traded; 4 ranked; winner +0.1126 SOL realized; pot 0.0237 SOL paid |
+| 2 | `vCj92uzM…BVnpump` | 5 min | 3 ranked; winner +0.0686 SOL realized; pot 0.0014 SOL paid |
+
+Both ran with no human in the loop after the launch transaction: dev buy, lock, fee sweeps, sale, random bell, scoring from the chain, payout, close.
 
 ## The rules of a match
 
@@ -86,6 +95,7 @@ Keys are read from `~/.config/arena/keeper.json` and `scorer.json`; the RPC URL 
 
 ```
 program/     the on-chain program (Rust, Pinocchio)
+site/        the website (a single page that follows the current match)
 client/      instruction builders, pump.fun / PumpSwap helpers, the keeper and scorer
 service/     keeper service, systemd unit, status command
 tests/       attack checks and end-to-end matches on the sim chain

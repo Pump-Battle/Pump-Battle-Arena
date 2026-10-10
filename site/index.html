@@ -1,0 +1,416 @@
+<title>Pump Battle Arena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a fight-night screen. The match card answers three questions in order: what's at stake and when,
+   who is winning, where the match is. Single dark theme by choice: it is an arcade cabinet. */
+:root {
+  --floor: #0e0b14; --panel: #171224; --panel-2: #1f1830; --line: #2e2544; --ink: #f1ecff; --mute: #9b92b3;
+  --red: #ff3d57; --blue: #3da9ff; --gold: #ffc53d; --up: #4ade80; --down: #ff6b6b;
+  --display: "Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box }
+body { background: var(--floor); background-image: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255,197,61,.14), transparent 60%); color: var(--ink); font: 16px/1.5 var(--body); padding-inline: 16px; padding-block: 0 64px; }
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 40px }
+h1, h2, h3 { font-family: var(--display); font-weight: 900; text-transform: uppercase; letter-spacing: .02em; line-height: .95; margin: 0; text-wrap: balance }
+h1 { font-size: clamp(3rem, 9vw, 6rem) } h2 { font-size: clamp(1.8rem, 4vw, 2.6rem) } h3 { font-size: 1.15rem; letter-spacing: .06em }
+p { margin: 0; max-width: 66ch }
+.mute { color: var(--mute) } .mono { font-family: var(--mono); font-variant-numeric: tabular-nums }
+.eyebrow { font: 600 .72rem/1 var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--gold) }
+.up { color: var(--up) } .down { color: var(--down) } .gold { color: var(--gold) }
+nav { display: flex; flex-wrap: wrap; gap: 6px 22px; align-items: center; justify-content: space-between; padding-block: 16px; border-bottom: 1px solid var(--line) }
+nav .brand { font: 900 1.4rem var(--display); text-transform: uppercase; letter-spacing: .04em }
+nav a { color: var(--mute); text-decoration: none; font-size: .9rem } nav a:hover { color: var(--ink) } nav .links { display: flex; flex-wrap: wrap; gap: 18px }
+.hero { display: grid; gap: 18px; padding-block: 28px 8px; position: relative }
+.hero p { font-size: 1.15rem; max-width: 58ch }
+.marquee { display: flex; align-items: center; gap: 14px; font: 600 .72rem/1 var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--gold) }
+.marquee::before, .marquee::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold)); opacity: .6 } .marquee::after { background: linear-gradient(90deg, var(--gold), transparent) }
+h1 { font-size: clamp(3.4rem, 10vw, 7.2rem); line-height: .88; letter-spacing: -.005em }
+h1 em { font-style: normal; color: var(--gold) }
+.hero-stats { display: flex; flex-wrap: wrap; gap: 8px 26px; font: 500 .85rem var(--mono); color: var(--mute) } .hero-stats b { color: var(--ink); font-weight: 600 }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center }
+.pill { display: inline-flex; align-items: center; gap: 8px; font: 600 .72rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--mute) }
+.pill.gold { color: var(--gold); border-color: var(--gold) } .pill.live { color: var(--up); border-color: var(--up) }
+.pill.live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--up); animation: blink 1.2s infinite } @keyframes blink { 50% { opacity: .3 } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 22px; display: grid; gap: 20px; min-width: 0 }
+.card.main { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(255,197,61,.15), 0 30px 80px -40px rgba(255,197,61,.35); background: linear-gradient(180deg, #1a1426, var(--panel)) }
+.card.main::before { content: "MAIN CARD"; display: block; width: max-content; margin: -34px auto 0; font: 900 .72rem/1 var(--display); letter-spacing: .3em; color: #1a1300; background: var(--gold); padding: 6px 14px; border-radius: 3px }
+.head { display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: baseline; justify-content: space-between }
+/* the three answers */
+.stake { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px }
+.stake > div { background: linear-gradient(180deg, var(--panel-2), #1a1428); border: 1px solid var(--line); border-radius: 8px; padding: 16px 18px; display: grid; gap: 4px; min-width: 0; box-shadow: inset 0 1px 0 rgba(255,255,255,.04) }
+.stake span { font: 600 .68rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute) }
+.stake b { font: 900 2.6rem/1 var(--display); letter-spacing: .02em } .stake b.mono { font: 600 2rem/1.1 var(--mono); letter-spacing: -.02em; text-shadow: 0 0 18px rgba(255,197,61,.18) }
+.stake small { font-size: .85rem; color: var(--mute) }
+.timeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; position: relative; padding-top: 6px }
+.timeline::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 13px; height: 2px; background: var(--line) }
+.step { display: grid; justify-items: center; gap: 6px; text-align: center; position: relative; min-width: 0 }
+.step i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); background: var(--panel) }
+.step.done i { background: var(--gold); border-color: var(--gold) } .step.now i { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(255,197,61,.2) }
+.step b { font: 700 .85rem var(--display); letter-spacing: .06em; text-transform: uppercase } .step small { font: 500 .72rem var(--mono); color: var(--mute) }
+.ring { position: relative; background: radial-gradient(ellipse 70% 60% at 50% 20%, rgba(255,197,61,.10), transparent 70%), radial-gradient(ellipse at 50% 90%, #2a2140 0%, var(--panel-2) 60%); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.ring::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; background: repeating-linear-gradient(90deg, transparent 0 22px, rgba(255,255,255,.035) 22px 24px); pointer-events: none }
+.ring canvas { display: block; width: 100%; height: auto; image-rendering: pixelated }
+.corner { position: absolute; top: 10px; display: grid; gap: 3px; width: 40%; min-width: 0 }
+.corner.l { left: 12px } .corner.r { right: 12px; text-align: right; justify-items: end }
+.corner .name { font: 900 1.1rem var(--display); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100% }
+.corner.l .name { color: var(--red) } .corner.r .name { color: var(--blue) }
+.corner .sub { font: 500 .72rem var(--mono); color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100% }
+.corner .score { font: 600 1rem var(--mono) }
+.hp { height: 8px; width: 100%; background: rgba(0,0,0,.45); border: 1px solid var(--line); border-radius: 2px; overflow: hidden } .hp i { display: block; height: 100%; background: var(--up); transition: width .6s ease } .corner.r .hp i { margin-left: auto }
+.vs { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); font: 900 1.8rem var(--display); color: var(--gold) }
+.ko { position: absolute; inset: 0; display: grid; place-items: center; font: 900 clamp(2rem, 8vw, 4rem) var(--display); color: var(--gold); text-shadow: 0 0 30px rgba(255,197,61,.6); pointer-events: none; opacity: 0; transition: opacity .3s } .ko.show { opacity: 1 }
+.top3 { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none }
+.top3 li { display: grid; grid-template-columns: 28px 48px 1fr auto; gap: 10px; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0 }
+.top3 li:first-child { border-color: var(--gold) } .top3 .rank { font: 900 1.3rem var(--display); color: var(--gold) }
+.top3 canvas { width: 36px; height: 48px; image-rendering: pixelated } .top3 .who { display: grid; min-width: 0 } .top3 .who b { font: 700 .95rem var(--display); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.top3 .who small { font: 500 .7rem var(--mono); color: var(--mute) } .top3 .val { font: 600 1rem var(--mono) }
+details { border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px } summary { cursor: pointer; font: 700 .9rem var(--display); letter-spacing: .08em; text-transform: uppercase; color: var(--mute) }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 12px 0 0; font-size: .92rem } dt { font: 600 .8rem var(--mono); color: var(--mute) } dd { margin: 0; min-width: 0 }
+.queue { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 18px } .queue > * { min-width: 0 }
+.nowbox { display: grid; gap: 10px } .miniring { position: relative; background: radial-gradient(ellipse at 50% 85%, #2a2140 0%, var(--panel-2) 60%); border: 1px solid var(--line); border-radius: 8px; overflow: hidden }
+.miniring canvas { display: block; width: 100%; height: auto; image-rendering: pixelated }
+.nextin { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; background: var(--panel-2); border: 1px solid var(--gold); border-radius: 8px; padding: 12px 16px }
+.nextin b { font: 900 2.2rem/1 var(--display); color: var(--gold); font-variant-numeric: tabular-nums } .nextin span { font: 600 .72rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute) }
+.qlist { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none }
+.qlist li { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-width: 0; font-size: .9rem }
+.qlist li.live { border-color: var(--up) } .qlist .at { font: 600 .78rem var(--mono); color: var(--mute) } .qlist .pair { display: flex; gap: 6px; align-items: center; min-width: 0; flex-wrap: wrap }
+.qlist .pair b { font: 700 .9rem var(--display); letter-spacing: .04em; text-transform: uppercase } .qlist .pair i { font: 900 .8rem var(--display); color: var(--gold); font-style: normal }
+.qlist .res { font: 600 .78rem var(--mono); color: var(--up) } .qlist canvas { width: 24px; height: 32px; image-rendering: pixelated; vertical-align: middle }
+@media (max-width: 760px) { .queue { grid-template-columns: 1fr } }
+.hof { border-collapse: collapse; width: 100%; font-size: .92rem } .hof th, .hof td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; vertical-align: middle }
+.hof th { font: 600 .68rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mute) } .hof td.n, .hof th.n { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums }
+.hof tr:first-child td { background: rgba(255,197,61,.06) } .hof .rank { font: 900 1.1rem var(--display); color: #1a1300; background: var(--gold); border-radius: 50%; width: 30px; height: 30px; display: inline-grid; place-items: center }
+.hof tr:not(:first-child) .rank { background: var(--panel-2); color: var(--mute); border: 1px solid var(--line) } .hof canvas { width: 30px; height: 40px; image-rendering: pixelated; vertical-align: middle; margin-right: 8px }
+.hof b { font: 700 .95rem var(--display); letter-spacing: .04em; text-transform: uppercase } .hof small { display: block; font: 500 .7rem var(--mono); color: var(--mute) } .hof .ex { font: 600 .62rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mute); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; margin-left: 6px }
+.scroll { overflow-x: auto; min-width: 0 }
+.qlist button.rp { font: 700 .7rem var(--display); letter-spacing: .08em; padding: 5px 10px; border-radius: 4px } .banner { position: absolute; left: 50%; top: 48%; transform: translateX(-50%); font: 900 1.1rem var(--display); letter-spacing: .2em; color: var(--gold); background: rgba(14,11,20,.7); padding: 4px 12px; border-radius: 4px; pointer-events: none }
+.bouts { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px }
+.bout { background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 14px; display: grid; gap: 10px; min-width: 0 }
+.bout .pair { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center }
+.bout .f { display: grid; gap: 4px; min-width: 0; justify-items: center; text-align: center } .bout canvas { width: 72px; height: 96px; image-rendering: pixelated }
+.bout .nm { font: 700 .9rem var(--display); letter-spacing: .05em; text-transform: uppercase; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.bout .w { font: 500 .68rem var(--mono); color: var(--mute) } .bout .pnl { font: 600 .95rem var(--mono) } .bout .mid { font: 900 1.2rem var(--display); color: var(--gold) }
+.bout .state { font: 600 .68rem var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mute) }
+.bout.winning-l .f:first-child .pnl, .bout.winning-r .f:last-child .pnl { color: var(--up) }
+form { display: grid; gap: 10px }
+input[type=text] { flex: 1 1 280px; min-width: 0; font: 15px var(--mono); padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--floor); color: var(--ink) }
+button { font: 700 .95rem var(--display); letter-spacing: .08em; text-transform: uppercase; padding: 10px 18px; border-radius: 6px; border: 1px solid var(--gold); background: var(--gold); color: #1a1300; cursor: pointer }
+button.ghost { background: transparent; color: var(--gold) } button:disabled { opacity: .5; cursor: default }
+button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+.msg { font: 500 .85rem var(--mono); color: var(--mute); min-height: 1.2em }
+.rules { display: grid; gap: 14px; counter-reset: r; padding: 0; margin: 0; list-style: none }
+.rules li { display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: start }
+.rules li::before { counter-increment: r; content: counter(r, decimal-leading-zero); font: 900 2rem/1 var(--display); color: var(--gold) }
+.rules b { display: block; font-family: var(--display); font-size: 1.1rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 2px }
+.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px } .two > * { min-width: 0 }
+.addr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.addr code { font: .82rem var(--mono); background: var(--floor); border: 1px solid var(--line); padding: 6px 8px; border-radius: 4px; word-break: break-all; min-width: 0 }
+.copy { font: 600 .7rem var(--mono); padding: 6px 10px; border-radius: 4px; border: 1px solid var(--line); background: transparent; color: var(--mute); text-transform: none; letter-spacing: 0 } .copy:hover { color: var(--ink) }
+a { color: var(--blue) }
+.avatars { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px }
+.av { display: grid; gap: 6px; justify-items: center; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px; min-width: 0 }
+.av canvas { width: 96px; height: 128px; image-rendering: pixelated } .av b { font: 700 .9rem var(--display); letter-spacing: .05em; text-transform: uppercase; text-align: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap } .av span { font: 500 .68rem var(--mono); color: var(--mute); text-align: center }
+.note { border-left: 3px solid var(--gold); padding-left: 12px; font-size: .92rem; color: var(--mute) }
+footer { font-size: .85rem; color: var(--mute); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 6px }
+@media (prefers-reduced-motion: reduce) { .pill.live::before { animation: none } .hp i { transition: none } }
+@media (max-width: 560px) { .rules li { grid-template-columns: 40px 1fr } .rules li::before { font-size: 1.5rem } dl { grid-template-columns: 1fr } .timeline { grid-template-columns: repeat(2, 1fr); gap: 14px } .timeline::before { display: none } .stake b { font-size: 2.1rem } .corner .name { font-size: .95rem } }
+</style>
+
+<div class="wrap">
+  <nav><span class="brand">Pump Battle Arena</span>
+    <span class="links"><a href="#match">Match</a><a href="#hof">Hall of Fame</a><a href="#rules">Rules</a><a href="#verify">Check it</a><a href="#avatars">Fighters</a></span></nav>
+
+  <header class="hero">
+    <div class="marquee"><span id="hdr">Mock page · showing last night's test match</span></div>
+    <h1>Battle it out<br>over <em>Coins.</em></h1>
+    <p>Each match is one pump.fun coin. Trade it. Whoever makes the most profit before the bell rings wins the pot. The pot sits in a program on the chain. Nobody has the key. Not even us.</p>
+    <div class="hero-stats"><span>Program <b>36ZCF6tS…MqKtR</b></span><span>Matches run <b>1</b></span><span>Paid out <b>0.0237 SOL</b></span><span>Scored from <b>the chain</b></span></div>
+  </header>
+
+  <section class="card main" id="match" style="margin-top:12px">
+    <div class="head"><div class="row"><span class="pill gold" id="status">Paid out</span><h2 style="font-size:1.6rem" id="coinName">LLQOSA <span class="mute">/ SRVF</span></h2></div>
+      <a href="https://pump.fun/coin/oGPKDMCpPBJh4cx1eUV1ScvYZgnMZXmNGE3EKmrpump" target="_blank" rel="noopener" class="mono" style="font-size:.85rem" id="coinLink">trade it on pump.fun ↗</a></div>
+
+    <div class="stake">
+      <div><span>Prize pot</span><b class="gold mono" id="pot">0.0237 SOL</b><small id="potSub">paid to the winner at 23:31:45</small></div>
+      <div><span>Time left</span><b class="mono" id="clock">00:00</b><small id="clockSub">bell rang at 23:26:44. Match over.</small></div>
+      <div><span id="winLabel">Winner · profit</span><b class="mono up" id="winVal">+0.1126 SOL</b><small id="winnerName">Rook the Unbent · 53DnQU1d..</small></div>
+    </div>
+
+    <div class="timeline">
+      <div class="step done" id="st0"><i></i><b>Launch</b><small id="st0t">23:12:32</small></div>
+      <div class="step done" id="st1"><i></i><b>Lock ends</b><small id="st1t">23:27:32</small></div>
+      <div class="step done" id="st2"><i></i><b>Bell</b><small id="st2t">23:26:44</small></div>
+      <div class="step done now" id="st3"><i></i><b>Paid</b><small id="st3t">23:31:45</small></div>
+    </div>
+
+    <div class="two">
+      <div style="display:grid;gap:12px">
+        <h3>Main event · #1 vs #2</h3>
+        <div class="ring" id="mainRing">
+          <div class="corner l"><div class="name" id="lName"></div><div class="sub" id="lSub"></div><div class="hp"><i id="lHp"></i></div><div class="score up" id="lScore"></div></div>
+          <div class="vs">VS</div>
+          <div class="corner r"><div class="name" id="rName"></div><div class="sub" id="rSub"></div><div class="hp"><i id="rHp"></i></div><div class="score up" id="rScore"></div></div>
+          <canvas id="fight" width="360" height="210" aria-label="Two pixel fighters trading blows"></canvas>
+          <div class="ko" id="ko">BELL</div>
+        </div>
+        <div class="row"><button class="ghost" id="replay">Replay the sells</button><span class="mute" style="font-size:.85rem">Every hit is a real sell: a strike for profit, a stagger for a loss. Health is each fighter's share of the profit taken so far.</span></div>
+      </div>
+      <div style="display:grid;gap:12px;align-content:start">
+        <h3>Ranked fighters</h3>
+        <ol class="top3" id="top3"></ol>
+        <p class="note" id="rankNote">You only get ranked if you sold before the bell. We count what you actually made, not what you still hold. 11 wallets traded this coin. 4 sold in time.</p>
+        <details><summary>Match details</summary><div id="detailsBox">
+          <dl><dt>Traders</dt><dd>11 wallets, 32 SOL traded in 15 minutes</dd><dt>Creator fees</dt><dd>0.0949 SOL. A quarter went to the pot, the rest to the creator.</dd><dt>Creator's bag</dt><dd>bought by the program for 0.0120 SOL, sold at unlock for 0.0098. No profit, so nothing from it went to the pot.</dd><dt>Bell</dt><dd>picked after the unlock, 14:12 into a 15:00 match</dd><dt>Table hash</dt><dd class="mono">b77af7551900d540…</dd><dt>Program</dt><dd class="mono">36ZCF6tS…MqKtR</dd></dl></div></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="hof">
+    <div class="head"><div><span class="eyebrow">Hall of Fame</span><h2>Champions</h2></div><span class="mute" style="font-size:.9rem">Ranked by profit actually taken, across every match</span></div>
+    <div class="scroll"><table class="hof"><thead><tr><th>#</th><th>Fighter</th><th class="n">Profit taken</th><th class="n">Losses taken</th><th class="n">Matches won</th><th class="n">Prize won</th></tr></thead><tbody id="hofBody"></tbody></table></div>
+    <p class="note">Profit and losses are what each wallet really sold for, minus what it paid, added up over every match. Prize won is SOL the program paid out to that wallet. Rows marked EXAMPLE are made up to show the layout; the top row is real, from last night's match.</p>
+  </section>
+
+  <section class="card" id="rules">
+    <div class="head"><div><span class="eyebrow">Rules</span><h2>How a match works</h2></div></div>
+    <ol class="rules">
+      <li><div><b>One coin, one match</b>We launch a new coin on pump.fun. In the same transaction the program buys the creator's share and locks it. The program checks that nobody bought before it did.</div></li>
+      <li><div><b>The pot comes from fees</b>The program is the coin's creator on pump.fun, so it gets every creator fee the coin earns. A quarter goes into the pot. The rest goes to the creator.</div></li>
+      <li><div><b>The lock ends at a set time</b>Then the program sells the whole bag. The creator gets back what it cost. Half of any profit goes into the pot. Right after the lock ends only our keeper can sell, with a price floor, so nobody can front-run it.</div></li>
+      <li><div><b>The bell is random</b>After the lock ends, anyone can ring the bell. It picks a random moment in the last ten minutes of the match. Only trades before that moment count. Nobody knows the moment until it is picked.</div></li>
+      <li><div><b>Score is the profit you took</b>What you got from your sells minus what those tokens cost you, straight from the chain. Tokens you still hold count for nothing. If you never sold, you are not ranked.</div></li>
+      <li><div><b>Anyone can check the winner</b>The scorer posts the winner and a hash of the full table. Anyone can redo the math from public data and compare. After a short wait, anyone can trigger the payout.</div></li>
+      <li><div><b>Nobody can get stuck</b>If no result is posted in time, the pot goes to a backup address set at launch. Once the pot is paid, anyone can close the match and the creator gets the rent back.</div></li>
+    </ol>
+  </section>
+
+  <section class="card" id="verify">
+    <div class="head"><div><span class="eyebrow">Check it</span><h2>The program is on the chain</h2></div></div>
+    <div class="two">
+      <div style="display:grid;gap:12px">
+        <h3>Program</h3>
+        <div class="addr"><code id="progAddr">36ZCF6tSXPc8FpG9wYsVZrWnPNtqUAd7b619MZ8MqKtR</code><button class="copy" data-copy="progAddr">copy</button></div>
+        <p class="mute">Open it on <a href="https://solscan.io/account/36ZCF6tSXPc8FpG9wYsVZrWnPNtqUAd7b619MZ8MqKtR" target="_blank" rel="noopener">Solscan</a>. You will see the program (41,432 bytes) and every transaction that touched it.</p>
+        <h3>Match coin</h3>
+        <div class="addr"><code id="mintAddr">oGPKDMCpPBJh4cx1eUV1ScvYZgnMZXmNGE3EKmrpump</code><button class="copy" data-copy="mintAddr">copy</button></div>
+        <p class="mute">On its <a href="https://pump.fun/coin/oGPKDMCpPBJh4cx1eUV1ScvYZgnMZXmNGE3EKmrpump" target="_blank" rel="noopener">pump.fun page</a> the dev is the match vault <code class="mono">7fPcUFqU…9msy</code>. The program controls that account. It has no private key.</p>
+        <h3>Code</h3>
+        <p class="mute">The code builds to the exact same bytes every time in a fixed Docker image. The program's hash is <code class="mono">713f4b41…</code>. Build it and compare. We will add the Solscan "verified" badge once the code is public.</p>
+      </div>
+      <div style="display:grid;gap:12px">
+        <h3>How to read a match</h3>
+        <p class="mute">Each match is one account on the chain (376 bytes). The fields, in order:</p>
+        <dl style="margin-top:0"><dt>cost_basis</dt><dd>what the program paid for the bag</dd><dt>tokens_locked</dt><dd>the bag</dd><dt>unlock_ts</dt><dd>when the lock ends</dd><dt>window</dt><dd>the earliest and latest second the bell can ring</dd><dt>fee_total / fee_prize</dt><dd>fees collected, and the part in the pot</dd><dt>proceeds / gain_prize</dt><dd>what the bag sold for, and the profit share in the pot</dd><dt>prize_pot</dt><dd>what the winner gets</dd><dt>candle_end</dt><dd>when the bell rang</dd><dt>winner / results_hash</dt><dd>the winner and the table hash</dd><dt>deadline</dt><dd>when the payout can happen</dd></dl>
+        <p class="mute">The site reads this live. The reader is in the code.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="avatars">
+    <div class="head"><div><span class="eyebrow">Fighters · idea for $FIGHT</span><h2>Every wallet gets a fighter</h2></div></div>
+    <p>Your fighter comes from your wallet address: a type, a look, gear and a name. No two wallets look alike. The idea: an arena token, <b>$FIGHT</b>, that lets you mint a fighter with gear you pick. Fighters are just for looks. The score is always real profit on the chain.</p>
+    <div class="avatars" id="avGrid"></div>
+    <div class="row"><button id="roll">Roll eight new fighters</button><button class="ghost" disabled>Mint for 50 $FIGHT · idea</button></div>
+    <p class="note">Before we make a token: a token that only buys looks is the least risky kind, but it is still a token we issue. We write the rules down and check them before anyone buys one.</p>
+  </section>
+
+  <footer><span>Pump Battle Arena · mock page · numbers from the test match on 9 Oct 2026, 23:12–23:31 EDT.</span><span>Not audited yet. One scorer key picks the winner and the bell uses a slot hash. Both get replaced before pots get big. Nothing here is financial advice.</span></footer>
+</div>
+
+<script>
+// ---------- seeded helpers
+function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619) } return h >>> 0 }
+function rng(seed) { let s = seed || 7; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) % 100000) / 100000 } }
+const pick = (r, a) => a[Math.floor(r() * a.length)];
+const f = (x, d = 4) => (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x).toFixed(d);
+
+// ---------- fighters: 24x32 cell sprites built from parts, with an outline, in eight genres
+const SKIN = ['#f1c9a5', '#d9a46f', '#b07a4a', '#7a4b2a', '#f5d6c3'];
+const GENRES = {
+  knight:  { label: 'Knight',       suit: ['#5b6475', '#8b4513'], metal: ['#c7cdd8', '#9aa3b2', '#d4af37'], accent: ['#c0272d', '#1e5bbd', '#1f8a3a', '#f0b800'], first: ['Sir', 'Dame', 'Ser'], last: ['Aldric', 'Rowena', 'Garrick', 'Isolde', 'Brannoc', 'Elowen', 'Tancred', 'Maud'] },
+  wizard:  { label: 'Wizard',       suit: ['#3b1f73', '#15306e', '#4a1d3f'], metal: ['#8b5a2b'], accent: ['#7df9ff', '#ffb000', '#ff5cf0', '#8dff6a'], first: ['Magus', 'Archmage', 'Old'], last: ['Vexel', 'Orrin', 'Thessaly', 'Quillon', 'Mirabel', 'Zoran', 'Hesper'] },
+  robot:   { label: 'Robot',        suit: ['#6b7280', '#4b5563'], metal: ['#a3a3a3', '#cbd5e1', '#b45309'], accent: ['#22d3ee', '#ef4444', '#a3e635'], first: ['Unit', 'Model', 'Mk'], last: ['7', '12', '404', 'X9', '31', '88', 'Zero'] },
+  marine:  { label: 'Space marine', suit: ['#1f4e3d', '#374151', '#1e3a5f'], metal: ['#9ca3af', '#d1d5db'], accent: ['#f97316', '#38bdf8', '#facc15'], first: ['Sgt.', 'Cpl.', 'Lt.'], last: ['Vasquez', 'Okafor', 'Reyes', 'Lindqvist', 'Tanaka', 'Duval', 'Mbeki'] },
+  ninja:   { label: 'Ninja',        suit: ['#111827', '#1f2937', '#2a1f3d'], metal: ['#e5e7eb'], accent: ['#dc2626', '#7c3aed', '#f59e0b'], first: ['Silent', 'Red', 'Night'], last: ['Kaede', 'Hanzo', 'Rin', 'Saizo', 'Yuki', 'Goemon'] },
+  pirate:  { label: 'Pirate',       suit: ['#7f1d1d', '#1e3a8a', '#3f2a14'], metal: ['#d4af37'], accent: ['#fef3c7', '#f59e0b'], first: ['Captain', 'Mad', 'One-Eye'], last: ['Morrow', 'Teach', 'Quint', 'Baskerville', 'Salt', 'Flint', 'Vane'] },
+  zombie:  { label: 'Zombie',       suit: ['#44403c', '#365314', '#3b3b5c'], metal: ['#78716c'], accent: ['#a3e635', '#84cc16'], first: ['Patient', 'Late', 'Shambling'], last: ['Zero', 'Hollis', 'Greaves', 'Mortlake', 'Crane', 'Vesper'] },
+  cyber:   { label: 'Cyberpunk',    suit: ['#1e1b4b', '#0f172a', '#312e81'], metal: ['#334155'], accent: ['#ff2bd6', '#00f0ff', '#b4ff00', '#ff8a00'], first: ['Null', 'Vox', 'Glitch'], last: ['Reyna', 'Kade', 'Sable', 'Nyx', 'Juno', 'Rook', 'Tess'] },
+};
+const NAMES_FIXED = { '53DnQU1dJZNHfKBpv2Lhsd4EBGNpwsF4tS13Egc1m6Tv': 'Rook the Unbent' };
+function fighter(w) {
+  const r = rng(hash(w)); const g = pick(r, Object.keys(GENRES)); const G = GENRES[g];
+  const c = { suit: pick(r, G.suit), metal: pick(r, G.metal), accent: pick(r, G.accent), skin: g === 'zombie' ? pick(r, ['#86efac', '#a7f3d0', '#bef264']) : g === 'robot' ? pick(r, G.metal) : pick(r, SKIN), eye: pick(r, ['#ffffff', '#fde68a', '#fca5a5', '#bae6fd']), dark: '#1a1424', blade: '#e8e8f0' };
+  const name = NAMES_FIXED[w] || `${pick(r, G.first)} ${pick(r, G.last)}`;
+  return { w, genre: g, label: G.label, c, name, v: [r() > .5, r() > .5, r() > .5] };
+}
+function paint(fg) {
+  const W = 24, H = 32, grid = Array.from({ length: H }, () => Array(W).fill(null)); const c = fg.c;
+  const R = (x, y, w, h, col) => { for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) if (xx >= 0 && xx < W && yy >= 0 && yy < H) grid[yy][xx] = col };
+  const g = fg.genre, v = fg.v;
+  // behind-the-body gear first
+  if (g === 'marine') R(9, 11, 6, 10, c.dark);                                        // jetpack
+  if (g === 'knight' && v[0]) R(7, 11, 10, 11, c.accent);                            // cape
+  // body
+  const legCol = g === 'wizard' ? c.suit : (g === 'robot' ? c.metal : c.suit);
+  R(8, 22, 3, 8, legCol); R(13, 22, 3, 8, legCol); R(8, 29, 3, 2, c.dark); R(13, 29, 3, 2, c.dark);
+  if (g === 'pirate' && v[1]) { R(13, 22, 3, 9, null); R(14, 22, 1, 9, '#8b5a2b') }   // peg leg
+  R(7, 12, 10, 10, g === 'knight' || g === 'robot' ? c.metal : c.suit);              // torso
+  if (g === 'zombie') { R(1, 14, 6, 3, c.suit); R(17, 14, 6, 3, c.suit); R(0, 14, 2, 3, c.skin); R(22, 14, 2, 3, c.skin); R(9, 16, 2, 3, c.skin); R(13, 19, 2, 3, c.skin) }
+  else { const armCol = g === 'robot' || g === 'knight' ? c.metal : c.suit; R(4, 13, 3, 8, armCol); R(17, 13, 3, 8, armCol); R(4, 21, 3, 2, g === 'robot' ? c.dark : c.skin); R(17, 21, 3, 2, g === 'robot' ? c.dark : c.skin) }
+  R(8, 3, 8, 9, c.skin); R(10, 7, 1, 1, c.eye); R(13, 7, 1, 1, c.eye);               // head + eyes
+  // genre overlays
+  if (g === 'knight') { R(7, 2, 10, 10, c.metal); R(8, 7, 8, 1, c.dark); if (v[1]) R(11, 0, 2, 2, c.accent); R(10, 14, 4, 4, c.accent); R(1, 12, 5, 9, c.accent); R(2, 13, 3, 7, c.metal); R(20, 3, 2, 13, c.blade); R(18, 16, 6, 1, c.dark); R(20, 17, 2, 3, c.dark) }
+  if (g === 'wizard') { R(6, 12, 12, 18, c.suit); R(9, 10, 6, 4, '#e5e7eb'); R(11, 0, 2, 2, c.suit); R(10, 2, 4, 2, c.suit); R(9, 4, 6, 1, c.suit); R(6, 5, 12, 1, c.suit); if (v[0]) R(8, 14, 8, 1, c.accent); R(20, 2, 1, 28, c.metal); R(19, 0, 3, 3, c.accent) }
+  if (g === 'robot') { R(7, 2, 10, 10, c.metal); R(11, 0, 2, 2, c.accent); R(8, 6, 8, 2, c.accent); R(10, 9, 4, 1, c.dark); R(11, 15, 2, 2, c.accent); if (v[0]) { R(4, 12, 3, 2, c.dark); R(17, 12, 3, 2, c.dark) } }
+  if (g === 'marine') { R(7, 2, 10, 10, c.suit); R(8, 5, 8, 3, c.accent); R(4, 11, 4, 3, c.metal); R(16, 11, 4, 3, c.metal); R(17, 16, 6, 2, c.dark); R(22, 15, 1, 1, c.accent); R(10, 15, 4, 2, c.accent) }
+  if (g === 'ninja') { R(8, 3, 8, 9, c.suit); R(9, 6, 6, 2, c.skin); R(10, 7, 1, 1, c.eye); R(13, 7, 1, 1, c.eye); R(8, 5, 8, 1, c.accent); R(16, 5, 4, 1, c.accent); R(17, 6, 4, 1, c.accent); R(10, 13, 4, 1, c.accent); R(20, 6, 1, 15, c.blade); R(19, 20, 3, 1, c.dark) }
+  if (g === 'pirate') { R(6, 2, 12, 2, c.dark); R(7, 0, 10, 2, c.dark); if (v[0]) R(10, 1, 4, 1, c.accent); R(12, 6, 3, 3, c.dark); R(8, 6, 8, 1, c.dark); R(6, 12, 12, 10, c.suit); R(11, 14, 1, 1, c.metal); R(11, 17, 1, 1, c.metal); R(20, 8, 2, 10, c.blade); R(21, 6, 2, 3, c.blade); R(19, 18, 4, 1, c.metal) }
+  if (g === 'zombie') { R(10, 10, 4, 1, c.dark); R(13, 7, 1, 1, null); R(13, 8, 1, 1, c.eye); R(8, 2, 3, 2, c.dark); R(13, 2, 2, 1, c.dark); if (v[0]) R(9, 12, 2, 2, c.skin) }
+  if (g === 'cyber') { R(11, 0, 2, 3, c.accent); R(8, 7, 8, 1, c.accent); R(9, 12, 1, 6, c.accent); R(14, 12, 1, 6, c.accent); R(8, 25, 3, 1, c.accent); R(13, 25, 3, 1, c.accent); R(17, 16, 5, 2, c.dark); if (v[0]) R(5, 13, 1, 8, c.accent) }
+  // outline: dark cells around every filled cell
+  const out = Array.from({ length: H }, () => Array(W).fill(false));
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (grid[y][x]) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy; if (X >= 0 && X < W && Y >= 0 && Y < H && !grid[Y][X]) out[Y][X] = true }
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (out[y][x]) grid[y][x] = '#0b0812';
+  return grid;
+}
+function render(ctx, grid, x0, y0, s, flip) {
+  ctx.save(); ctx.translate(x0, y0); if (flip) { ctx.translate(24 * s, 0); ctx.scale(-1, 1) }
+  for (let y = 0; y < 32; y++) for (let x = 0; x < 24; x++) if (grid[y][x]) { ctx.fillStyle = grid[y][x]; ctx.fillRect(x * s, y * s, s, s) }
+  ctx.restore();
+}
+function drawTo(canvas, fg, scale) { canvas.width = 24 * scale; canvas.height = 32 * scale; const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); render(ctx, paint(fg), 0, 0, scale, false) }
+
+// ---------- the finished canary's real leaderboard (realized SOL, sells before the bell)
+const BOARD = [
+  { w: '53DnQU1dJZNHfKBpv2Lhsd4EBGNpwsF4tS13Egc1m6Tv', realized: 0.1126, sells: 1 },
+  { w: '2hGMCnLbfT9examplewallet000000000000000002', realized: 0.0472, sells: 1 },
+  { w: 'EetAWV8WhV9examplewallet000000000000000003', realized: 0.0134, sells: 1 },
+  { w: 'C29JBEEtVd9examplewallet000000000000000004', realized: -1.1038, sells: 3 },
+];
+const top3 = document.getElementById('top3');
+BOARD.forEach((r, i) => {
+  const fg = fighter(r.w); const li = document.createElement('li');
+  li.innerHTML = `<span class="rank">${i + 1}</span><canvas></canvas><div class="who"><b>${fg.name}</b><small>${fg.label} · ${r.w.slice(0, 8)}.. · ${r.sells} sell${r.sells > 1 ? 's' : ''}</small></div><span class="val ${r.realized > 0 ? 'up' : 'down'}">${f(r.realized)}</span>`;
+  top3.appendChild(li); drawTo(li.querySelector('canvas'), fg, 2);
+});
+document.getElementById('winnerName').textContent = `${fighter(BOARD[0].w).name} · ${BOARD[0].w.slice(0, 8)}..`;
+
+// ---------- live: follow the match record in the shared db (written by the keeper's operator during a match)
+let BOARD_LIVE = null;
+function renderMatch(m) {
+  const T = ts => ts ? new Date(ts * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—';
+  document.getElementById('hdr').textContent = m.headline || 'Live match';
+  document.getElementById('coinName').innerHTML = `${m.name} <span class="mute">/ ${m.symbol}</span>`;
+  document.getElementById('coinLink').href = 'https://pump.fun/coin/' + m.mint;
+  document.getElementById('status').textContent = m.status;
+  document.getElementById('status').className = 'pill ' + (m.phase === 'paid' || m.phase === 'closed' ? 'gold' : 'live');
+  document.getElementById('pot').textContent = (m.pot || 0).toFixed(4) + ' SOL';
+  document.getElementById('potSub').textContent = m.pot_sub || '';
+  const steps = [['Launch', m.t_launch], ['Lock ends', m.t_unlock], ['Bell', m.t_bell], [m.phase === 'expired' ? 'Expired' : 'Paid', m.t_paid]];
+  const order = ['launched', 'sold', 'bell', 'posted', 'paid', 'closed', 'expired']; const pi = order.indexOf(m.phase);
+  steps.forEach(([lab, t], i) => { const el = document.getElementById('st' + i); el.querySelector('b').textContent = lab; document.getElementById('st' + i + 't').textContent = T(t);
+    const done = [true, pi >= 1, pi >= 2, pi >= 4][i]; el.className = 'step' + (done ? ' done' : '') + ((done && (i === 3 || !([true, pi >= 1, pi >= 2, pi >= 4][i + 1]))) ? ' now' : '') });
+  const b = m.board || []; BOARD_LIVE = b;
+  document.getElementById('winLabel').textContent = pi >= 3 ? 'Winner · profit' : 'Leader · profit';
+  document.getElementById('winVal').textContent = b.length ? f(b[0].realized) + ' SOL' : '—';
+  document.getElementById('winnerName').textContent = b.length ? `${fighter(b[0].w).name} · ${b[0].w.slice(0, 8)}..` : (m.phase === 'expired' ? 'nobody sold before the bell' : 'nobody ranked yet');
+  document.getElementById('rankNote').textContent = m.rank_note || 'You only get ranked if you sold before the bell. We count what you actually made, not what you still hold.';
+  const t3 = document.getElementById('top3'); t3.innerHTML = '';
+  b.slice(0, 5).forEach((r, i) => { const fg = fighter(r.w); const li = document.createElement('li');
+    li.innerHTML = `<span class="rank">${i + 1}</span><canvas></canvas><div class="who"><b>${fg.name}</b><small>${fg.label} · ${r.w.slice(0, 8)}.. · ${r.sells} sell${r.sells > 1 ? 's' : ''}</small></div><span class="val ${r.realized > 0 ? 'up' : 'down'}">${f(r.realized)}</span>`;
+    t3.appendChild(li); drawTo(li.querySelector('canvas'), fg, 2) });
+  if (!b.length) t3.innerHTML = '<li><span class="rank">–</span><div class="who" style="grid-column:2/4"><b class="mute">No one ranked yet</b><small>the first wallet to sell at a profit takes the lead</small></div><span></span></li>';
+  document.getElementById('detailsBox').innerHTML = `<dl><dt>Traders</dt><dd>${m.traders ?? '—'} wallets</dd><dt>Creator fees</dt><dd>${(m.fees || 0).toFixed(4)} SOL. A quarter goes to the pot.</dd><dt>Creator's bag</dt><dd>cost ${(m.cost || 0).toFixed(4)} SOL${m.proceeds ? ', sold for ' + m.proceeds.toFixed(4) : ''}</dd><dt>Table hash</dt><dd class="mono">${m.hash ? m.hash.slice(0, 16) + '…' : '—'}</dd><dt>Program</dt><dd class="mono">36ZCF6tS…MqKtR</dd></dl>`;
+  if (b.length >= 2) setRing(b[0], b[1]); else if (b.length === 1) setRing(b[0], { w: 'challenger-waiting', realized: 0 });
+  loadHits(m.hits); if (m.phase === 'posted' || m.phase === 'paid') { const ko = document.getElementById('ko'); ko.textContent = 'BELL'; }
+  window.__clock = m;
+}
+setInterval(() => { const m = window.__clock; if (!m) return; const el = document.getElementById('clock'), sub = document.getElementById('clockSub'); const now = Date.now() / 1000;
+  if (m.phase === 'launched' && m.t_unlock) { const left = Math.max(0, m.t_unlock - now); el.textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(Math.floor(left % 60)).padStart(2, '0')}`; sub.textContent = 'until the lock ends. The bell rings in the last minute.' }
+  else if (m.phase === 'sold' || m.phase === 'bell') { el.textContent = '00:00'; sub.textContent = m.t_bell ? 'bell rang at ' + new Date(m.t_bell * 1000).toLocaleTimeString() + '. Scoring…' : 'lock ended. Selling the bag…' }
+  else if (m.phase === 'posted' && m.t_deadline) { const left = Math.max(0, m.t_deadline - now); el.textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(Math.floor(left % 60)).padStart(2, '0')}`; sub.textContent = 'challenge window. Then the pot is paid.' }
+  else { el.textContent = '00:00'; sub.textContent = m.clock_sub || 'match over' } }, 500);
+(async () => { try { const db = await claude.use('db'); if (!db) return; db.doc('matches/current').onSnapshot(snap => { const m = snap && (snap.data ? snap.data() : snap); if (m && m.mint) renderMatch(m) }) } catch (e) { /* page keeps the baked example */ } })();
+
+// ---------- main ring: #1 vs #2, driven by REAL sells (hits). No random swings.
+const cv = document.getElementById('fight'), ctx = cv.getContext('2d');
+let LF, RF, LG, RG, hp = [0.5, 0.5], ringPair = ['', ''];
+function setRing(a, b) {
+  const same = ringPair[0] === a.w && ringPair[1] === b.w; ringPair = [a.w, b.w];
+  LF = fighter(a.w); RF = fighter(b.w); LG = paint(LF); RG = paint(RF);
+  document.getElementById('lName').textContent = LF.name; document.getElementById('rName').textContent = b.w === 'challenger-waiting' ? 'Challenger' : RF.name;
+  document.getElementById('lSub').textContent = `${LF.label} · ${a.w.slice(0, 8)}..`; document.getElementById('rSub').textContent = b.w === 'challenger-waiting' ? 'waiting for a second seller' : `${RF.label} · ${b.w.slice(0, 8)}..`;
+  document.getElementById('lScore').textContent = f(a.realized) + ' SOL'; document.getElementById('rScore').textContent = b.w === 'challenger-waiting' ? '' : f(b.realized) + ' SOL';
+  const pa = Math.max(0, a.realized), pb = Math.max(0, b.realized), tot = pa + pb;
+  hp = tot > 0 ? [Math.max(.08, pa / tot), Math.max(.08, pb / tot)] : [0.5, 0.5]; setHp(); if (!same) { fx.length = 0; stance = [0, 0] }
+}
+function setHp() { document.getElementById('lHp').style.width = (hp[0] * 100) + '%'; document.getElementById('rHp').style.width = (hp[1] * 100) + '%' }
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let t = 0, fx = [], stance = [0, 0], seenHits = 0, hitQueue = [], lastHitAt = -99, HITS = [];
+function playHit(h) {   // h: {w, d}  -> the fighter in the ring who sold; d > 0 strike, d < 0 stagger
+  const side = h.w === ringPair[0] ? 0 : (h.w === ringPair[1] ? 1 : -1); if (side < 0) return;
+  stance[side] = h.d > 0 ? 1 : -1; lastHitAt = t;
+  fx.push({ side, text: (h.d > 0 ? '+' : '−') + Math.abs(h.d).toFixed(4), born: t, good: h.d > 0 });
+}
+function frame() {
+  t += 1; ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = 'rgba(255,255,255,.07)'; ctx.fillRect(0, 194, cv.width, 2);
+  if (hitQueue.length && t - lastHitAt > 28) playHit(hitQueue.shift());
+  const age = t - lastHitAt; if (age > 18) stance = [0, 0];
+  const breathe = reduced ? 0 : Math.round(Math.sin(t / 14) * 1.5), breathe2 = reduced ? 0 : Math.round(Math.cos(t / 16) * 1.5);
+  const push = age < 18 ? Math.round(Math.sin(age / 18 * Math.PI) * 34) : 0;
+  const dl = stance[0] === 1 ? push : (stance[0] === -1 ? -push * .6 : 0), dr = stance[1] === 1 ? push : (stance[1] === -1 ? -push * .6 : 0);
+  ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(110 + dl, 196, 46, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.beginPath(); ctx.ellipse(250 - dr, 196, 46, 7, 0, 0, Math.PI * 2); ctx.fill();
+  render(ctx, LG, 50 + dl, 38 + breathe, 5, false); render(ctx, RG, 190 - dr, 38 + breathe2, 5, true);
+  fx = fx.filter(e => t - e.born < 70);
+  for (const e of fx) { const k = (t - e.born) / 70; ctx.globalAlpha = 1 - k; ctx.fillStyle = e.good ? '#4ade80' : '#ff6b6b'; ctx.font = '900 22px "JetBrains Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText(e.text, e.side === 0 ? 150 : 210, 70 - k * 40); ctx.globalAlpha = 1 }
+  if (!reduced) requestAnimationFrame(frame);
+}
+function loadHits(hits) {   // new sells since the last record -> queue them, in order
+  HITS = hits || []; const fresh = HITS.slice(seenHits); seenHits = HITS.length;
+  if (fresh.length > 8) { fresh.splice(0, fresh.length - 8) }   // don't replay a whole backlog on first load
+  hitQueue.push(...fresh);
+}
+setRing(BOARD[0], BOARD[1]); frame(); if (reduced) frame();
+document.getElementById('replay').addEventListener('click', () => { hitQueue = HITS.slice(); fx.length = 0; const ko = document.getElementById('ko'); ko.textContent = 'REPLAY'; ko.classList.add('show'); setTimeout(() => ko.classList.remove('show'), 900) });
+
+// ---------- hall of fame (one real row, the rest examples)
+const HOF = [
+  { w: '53DnQU1dJZNHfKBpv2Lhsd4EBGNpwsF4tS13Egc1m6Tv', profit: 0.1126, loss: 0, matches: 1, prize: 0.0237, real: true },
+  { w: 'k7aLD73wEXAMPLEwallet0000000008', profit: 0.0891, loss: 0.0210, matches: 1, prize: 0.0150 },
+  { w: 'hy55PGKUEXAMPLEwallet0000000004', profit: 0.0612, loss: 0.0044, matches: 0, prize: 0 },
+  { w: '6VgpMnRLEXAMPLEwallet0000000005', profit: 0.0340, loss: 0.0180, matches: 0, prize: 0 },
+  { w: 'C29JBEEtVd9examplewallet000000000000000004', profit: 0, loss: 1.1038, matches: 0, prize: 0 },
+];
+const hb = document.getElementById('hofBody');
+HOF.forEach((r, i) => { const fg = fighter(r.w); const tr = document.createElement('tr');
+  tr.innerHTML = `<td class="rank">${i + 1}</td><td><canvas></canvas><b>${fg.name}</b>${r.real ? '' : '<span class="ex">example</span>'}<small>${fg.label} · ${r.w.slice(0, 8)}..</small></td><td class="n up">${f(r.profit)}</td><td class="n down">${r.loss ? '−' + r.loss.toFixed(4) : '0'}</td><td class="n">${r.matches}</td><td class="n gold">${r.prize ? r.prize.toFixed(4) + ' SOL' : '—'}</td>`;
+  hb.appendChild(tr); drawTo(tr.querySelector('canvas'), fg, 1) });
+
+// ---------- fighter gallery
+const grid = document.getElementById('avGrid');
+function renderAvatars(seedBase) {
+  grid.innerHTML = '';
+  const order = Object.keys(GENRES);
+  for (let i = 0; i < 8; i++) {
+    let w = seedBase + ':' + i, fg = fighter(w), tries = 0;
+    while (fg.genre !== order[i] && tries < 400) { tries += 1; w = seedBase + ':' + i + ':' + tries; fg = fighter(w) }   // one of each genre
+    const el = document.createElement('div'); el.className = 'av'; const c = document.createElement('canvas'); el.appendChild(c);
+    el.insertAdjacentHTML('beforeend', `<b>${fg.name}</b><span>${fg.label}</span>`); grid.appendChild(el); drawTo(c, fg, 4);
+  }
+}
+let roll = 1; renderAvatars('gallery' + roll);
+document.getElementById('roll').addEventListener('click', () => { roll += 1; renderAvatars('gallery' + roll) });
+
+// ---------- copy buttons
+document.querySelectorAll('.copy').forEach(b => b.addEventListener('click', () => {
+  const el = document.getElementById(b.dataset.copy); const txt = el.textContent;
+  navigator.clipboard.writeText(txt).then(() => { b.textContent = 'copied'; setTimeout(() => b.textContent = 'copy', 1200) }).catch(() => { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'select + copy' });
+}));
+</script>

@@ -3,7 +3,7 @@
 Talks to the SECOND test validator on vote (192.168.2.123:18899), which runs the
 real pump.fun / PumpSwap / fee / mayhem programs cloned from mainnet. Buy and sell
 instructions come from the frozen copy of the mainnet-validated client
-(pumpfun_frozen.py, a frozen copy of the mainnet-validated client; never import the
+(pumpfun_frozen.py, a copy of /mnt/ssd2/swarm-trade/pumpfun.py -- never import the
 live one). create_v2 and migrate are encoded here from pump.fun's on-chain IDL.
 """
 import base64, hashlib, json, struct, time
@@ -208,7 +208,7 @@ def migrate_ix(user, mint):
                pool_quote_token_account=pf.ata(pool, WSOL, TOKEN), token_2022_program=TOKEN22,
                associated_token_program=ATA_PROG, pump_amm_event_authority=pf.amm_event_authority(),
                event_authority=pf.event_authority(), program=pf.PUMP, rent=RENT)
-    idl = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pump_idl.json')))
+    idl = json.load(open('/mnt/ssd2/fight_sim/chain/pump_idl.json'))
     spec = next(i for i in idl['instructions'] if i['name'] == 'migrate')
     metas = [AccountMeta(acc['global_' if a['name'] == 'global' else a['name']], bool(a.get('signer')), bool(a.get('writable')))
              for a in spec['accounts']]
@@ -273,7 +273,7 @@ def migrate_v2_ix(user, mint, remaining=()):
                base_token_program=TOKEN22, quote_token_program=TOKEN, token_2022_program=TOKEN22,
                associated_token_program=ATA_PROG, pump_amm_event_authority=pf.amm_event_authority(), rent=RENT,
                event_authority=pf.event_authority(), program=pf.PUMP)
-    idl = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pump_idl.json')))
+    idl = json.load(open('/mnt/ssd2/fight_sim/chain/pump_idl.json'))
     spec = next(i for i in idl['instructions'] if i['name'] == 'migrate_v2')
     metas = [AccountMeta(acc['global_' if a['name'] == 'global' else a['name']], bool(a.get('signer')), bool(a.get('writable')))
              for a in spec['accounts']]
