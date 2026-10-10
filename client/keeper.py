@@ -44,18 +44,23 @@ def chain_trades(mint, until_ts, exclude):
     out = []
     for sig, bt in sigs.items():
         tx = rpc.call('getTransaction', [sig, {'encoding': 'json', 'commitment': 'confirmed', 'maxSupportedTransactionVersion': 1}])
-        keys = tx['transaction']['message']['accountKeys']; m = tx['meta']
-        payer = keys[0]
-        if payer in exclude:
-            continue
-        progs = {keys[ix['programIdIndex']] for ix in tx['transaction']['message']['instructions']}
+        msg = tx['transaction']['message']; m = tx['meta']
+        la = m.get('loadedAddresses') or {}
+        keys = msg['accountKeys'] + la.get('writable', []) + la.get('readonly', [])
+        progs = {keys[ix['programIdIndex']] for ix in msg['instructions']}
         if not progs & {str(pf.PUMP), str(pf.AMM)}:
             continue
-        tok = lambda bals: sum(int(b['uiTokenAmount']['amount']) for b in (bals or []) if b.get('owner') == payer and b['mint'] == str(mint))
-        dt = tok(m.get('postTokenBalances')) - tok(m.get('preTokenBalances'))
-        if dt == 0:
-            continue
-        out.append((bt, sig, payer, m['postBalances'][0] - m['preBalances'][0], dt))
+        # credit the wallet whose TOKENS moved, not the fee payer: many bots pay fees from a separate wallet
+        owners = {b.get('owner') for b in (m.get('preTokenBalances') or []) + (m.get('postTokenBalances') or []) if b['mint'] == str(mint)}
+        for o in owners:
+            if o in exclude or o == str(pf.bonding_curve(mint)) or (pool is not None and o == str(pool.pool)):
+                continue
+            tok = lambda bals: sum(int(b['uiTokenAmount']['amount']) for b in (bals or []) if b.get('owner') == o and b['mint'] == str(mint))
+            dt = tok(m.get('postTokenBalances')) - tok(m.get('preTokenBalances'))
+            if dt == 0 or o not in keys:
+                continue
+            i = keys.index(o)
+            out.append((bt, sig, o, m['postBalances'][i] - m['preBalances'][i], dt))
     return sorted(out)
 
 
